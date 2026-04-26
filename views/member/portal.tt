@@ -1,6 +1,7 @@
 <%# Wrapped by views/layouts/scheduler-page.tt (via unearth-page-wrapper layout) %>
 <div class="body-and-sidebar">
   <a name="top"></a>
+  <div style="max-width: 640px; margin: 0 auto;">
   <h1 class="text-center">Your BACDS Membership Info</h1>
 
   <% IF error %>
@@ -19,7 +20,7 @@
     <a href="/contact/">contact us</a>.
   </p>
 
-  <form action="<% request.uri_base %>/unearth/member/portal" method="POST" style="max-width: 640px; margin: 0 auto;">
+  <form class="member-portal" action="<% request.uri_base %>/unearth/member/portal" method="POST">
     <input type="hidden" name="token" value="<% token | html %>">
 
     <h2>Name</h2>
@@ -120,4 +121,5 @@
     </div>
   </form>
   <% END %>
+  </div>
 </div>

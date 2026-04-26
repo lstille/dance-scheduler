@@ -196,3 +196,10 @@ a.quieter-link:hover {
   text-decoration:none;
   margin-top:6px;"
 }
+
+/* Member portal: visually distinguish read-only fields from editable ones.
+ * !important needed because style.css sets .form-control { background: #fff !important } */
+.member-portal .form-control:disabled {
+  background-color: #e9ecef !important;
+  opacity: 1; /* override Bootstrap's 0.65 opacity on disabled inputs */
+}
