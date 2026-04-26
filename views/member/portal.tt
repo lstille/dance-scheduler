@@ -12,7 +12,8 @@
   <% ELSE %>
 
   <p class="text-center text-muted">
-    Changes are saved directly to your BACDS membership record.
+    You can update your name, contact, and address information below.
+    Membership status is shown for reference and cannot be changed here.
     To update your email address, please
 <!-- FIXME TODO there is no /contact/ url -->
     <a href="/contact/">contact us</a>.
@@ -44,6 +45,27 @@
         <label class="form-label" for="nick_name">Preferred name / nickname</label>
         <input type="text" class="form-control" id="nick_name" name="nick_name"
           value="<% contact.nick_name | html %>">
+      </div>
+    </div>
+
+    <h2>Membership <small class="text-muted fs-6 fw-normal">(read-only)</small></h2>
+    <div class="row mb-3">
+      <div class="col-md-6 mb-2">
+        <label class="form-label">Membership type</label>
+        <input type="text" class="form-control" value="<% contact.membership_type_name | html %>" disabled>
+      </div>
+      <div class="col-md-4 mb-2">
+        <label class="form-label">Membership expires</label>
+        <div class="input-group">
+          <input type="text" class="form-control" value="<% contact.membership_end | html %>" disabled>
+          <% IF contact.membership_is_active.defined %>
+            <% IF contact.membership_is_active %>
+              <span class="input-group-text text-success">&#10003;</span>
+            <% ELSE %>
+              <span class="input-group-text text-danger">&#10007;</span>
+            <% END %>
+          <% END %>
+        </div>
       </div>
     </div>
 

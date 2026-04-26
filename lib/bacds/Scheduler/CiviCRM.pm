@@ -115,6 +115,7 @@ use warnings;
 
 use Carp qw/croak/;
 use Data::Dump qw/dump/;
+use DateTime;
 use JSON::MaybeXS qw/encode_json decode_json/;
 use LWP::UserAgent;
 use HTTP::Request::Common;
@@ -232,22 +233,40 @@ sub get_contact {
         limit => 1,
     });
 
-    my $addr  = $addr_result->{values}[0]  // {};
-    my $phone = $phone_result->{values}[0] // {};
+    my $membership_result = $self->_call_v4('Membership', 'get', {
+        select  => [qw(
+            end_date
+            membership_type_id:name
+        )],
+        where   => [['contact_id', '=', $contact_id]],
+        orderBy => {'end_date' => 'DESC'},
+        limit   => 1,
+    });
+
+    my $addr       = $addr_result->{values}[0]       // {};
+    my $phone      = $phone_result->{values}[0]      // {};
+    my $membership = $membership_result->{values}[0] // {};
 
     return {
-        contact_id     => $contact_id,
-        first_name     => $contact->{first_name}              // '',
-        middle_name    => $contact->{middle_name}             // '',
-        last_name      => $contact->{last_name}               // '',
-        nick_name      => $contact->{nick_name}               // '',
-        email          => $contact->{'email_primary.email'}   // '',
-        street_address => $addr->{street_address}             // '',
-        city           => $addr->{city}                       // '',
-        state          => $addr->{'state_province_id:label'}  // '',
-        postal_code    => $addr->{postal_code}                // '',
-        country        => $addr->{'country_id:label'}         // 'United States',
-        phone          => $phone->{phone}                     // '',
+        contact_id           => $contact_id,
+        first_name           => $contact->{first_name}              // '',
+        middle_name          => $contact->{middle_name}             // '',
+        last_name            => $contact->{last_name}               // '',
+        nick_name            => $contact->{nick_name}               // '',
+        email                => $contact->{'email_primary.email'}   // '',
+        street_address       => $addr->{street_address}             // '',
+        city                 => $addr->{city}                       // '',
+        state                => $addr->{'state_province_id:label'}  // '',
+        postal_code          => $addr->{postal_code}                // '',
+        country              => $addr->{'country_id:label'}         // 'United States',
+        phone                => $phone->{phone}                     // '',
+        membership_type_name => $membership->{'membership_type_id:name'} // '',
+        membership_end       => $membership->{end_date}             // '',
+        membership_is_active => (
+            $membership->{end_date}
+                ? (DateTime->now->ymd le $membership->{end_date} ? 1 : 0)
+                : undef
+        ),
     };
 }
 
