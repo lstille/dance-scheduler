@@ -38,7 +38,7 @@ my ($find_contacts_stub, $get_contact_stub, $last_magic_link, $last_update);
         bless {}, shift;
     };
 
-    *bacds::Scheduler::CiviCRM::find_contacts_by_email = sub {
+    *bacds::Scheduler::CiviCRM::find_member_contacts_by_email = sub {
         my ($self, $email) = @_;
         return $find_contacts_stub // [];
     };
@@ -62,6 +62,7 @@ my ($find_contacts_stub, $get_contact_stub, $last_magic_link, $last_update);
 test_get_request_page();
 test_post_request_link_bad_email();
 test_post_request_link_unknown_email();
+test_post_request_link_non_member_email();
 test_post_request_link_known_email();
 test_post_request_link_multiple_contacts();
 test_portal_invalid_token();
@@ -114,6 +115,25 @@ sub test_post_request_link_unknown_email {
     ok $res->is_success, 'POST with unknown email returns 200';
     like $res->content, qr{Check Your Email}, 'shows confirmation page';
     ok !$last_magic_link, 'no email sent for unknown address (silent ignore)';
+}
+
+sub test_post_request_link_non_member_email {
+    # Email is known in CiviCRM but the contact has no membership record;
+    # find_member_contacts_by_email returns [] just like an unknown email.
+    $find_contacts_stub = [];
+    $last_magic_link    = undef;
+
+    my $res;
+    warning_like {
+        $res = $Test->request(POST '/unearth/member/request-link',
+            { email => 'nonmember@example.com' }
+        );
+    } qr{^civicrm request_link: no contacts found for nonmember\@example.com},
+    'got expected warning for non-member email';
+
+    ok $res->is_success, 'POST with non-member email returns 200';
+    like $res->content, qr{Check Your Email}, 'shows same confirmation page as unknown email';
+    ok !$last_magic_link, 'no email sent for non-member address';
 }
 
 sub test_post_request_link_known_email {
@@ -233,8 +253,10 @@ sub test_portal_valid_token_no_membership {
 
     my $res = $Test->request(GET "/unearth/member/portal?token=$token");
     ok $res->is_success, 'GET portal with no membership returns 200';
-    unlike $res->content, qr{input-group-text text-success|input-group-text text-danger},
-        'no status icon shown when membership is absent';
+    like $res->content, qr{No membership record found},
+        'shows error for contact with no membership history';
+    unlike $res->content, qr{Save changes},
+        'does not show the edit form for non-members';
 }
 
 sub test_portal_valid_token_expired_membership {

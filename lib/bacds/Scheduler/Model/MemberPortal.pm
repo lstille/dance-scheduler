@@ -63,7 +63,7 @@ sub request_link {
 
     my $civi = bacds::Scheduler::CiviCRM->new;
 
-    my $contacts = $civi->find_contacts_by_email($email);
+    my $contacts = $civi->find_member_contacts_by_email($email);
     #return unless @$contacts;  # silent ignore for unknown emails
     if (!@$contacts) {
         warn "civicrm request_link: no contacts found for $email";
@@ -104,7 +104,12 @@ sub get_contact_for_portal {
     my $token_row = _validate_token($token, $dbh);
 
     my $civi = bacds::Scheduler::CiviCRM->new;
-    return $civi->get_contact($token_row->civicrm_contact_id);
+    my $contact = $civi->get_contact($token_row->civicrm_contact_id);
+
+    croak "No membership record found for this account.\n"
+        unless defined $contact->{membership_is_active};
+
+    return $contact;
 }
 
 =head2 save_contact($token, \%form_data, $dbh)
